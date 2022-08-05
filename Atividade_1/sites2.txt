@@ -1,0 +1,5 @@
+https://gobyexample.com/reading-files
+https://golang.cafe/blog/golang-read-file-example.html
+https://gosamples.dev/read-file/
+https://linuxhint.com/read-file-golang/
+https://www.geeksforgeeks.org/how-to-read-and-write-the-files-in-golang/

@@ -1,0 +1,5 @@
+https://golangdocs.com/golang-read-file-line-by-line
+https://golangbot.com/read-files/
+https://tutorialedge.net/golang/reading-writing-files-in-go/
+https://www.codegrepper.com/code-examples/go/how+to+read+file+golang
+https://surajsharma.net/blog/golang-read-text-file

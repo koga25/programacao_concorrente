@@ -1,0 +1,5 @@
+https://stackoverflow.com/questions/60931535/is-resp-body-close-required-if-i-dont-need-response
+https://blog.logrocket.com/making-http-requests-in-go/
+https://stackoverflow.com/questions/36267819/http-request-to-wikipedia
+https://www.digitalocean.com/community/tutorials/how-to-make-http-requests-in-go
+https://pkg.go.dev/net/http
