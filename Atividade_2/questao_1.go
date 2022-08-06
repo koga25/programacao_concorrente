@@ -55,5 +55,5 @@ func begin(numberOfThreads int) {
 }
 
 func main() {
-	begin(5)
+	begin(rand.Intn(100))
 }
