@@ -73,10 +73,13 @@ func main() {
 	sala_espera_capacity := 10
 	fila_espera := NewMutexIntBuffer(sala_espera_capacity)
 
+	random_upper_bound := 15
+	random_lower_bound := 5
+
 	go cortarCabelo(fila_espera)
 
 	for i := 1; true; i++ {
-		random_time := time.Duration(rand.Intn(5)) * time.Second
+		random_time := time.Duration(rand.Intn(random_upper_bound-random_lower_bound)+random_lower_bound) * time.Second
 		time.Sleep(random_time)
 		go desejoCortarCabelo(i, fila_espera)
 	}
@@ -95,7 +98,7 @@ func desejoCortarCabelo(client_number int, fila_espera *MutexIntBuffer) {
 }
 
 func cortarCabelo(fila_espera *MutexIntBuffer) {
-	cutting_time := 2 * time.Second
+	cutting_time := 10 * time.Second
 	dormindo := true
 	for true {
 		sala_espera_vazia := fila_espera.checkEmpty()
