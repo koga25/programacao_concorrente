@@ -6,8 +6,32 @@ import (
 	"net"
 	"os"
 	"strings"
-	"time"
+	"strconv"
 )
+
+var concurrentClientsCounter = 0
+
+func handleConnection(c net.Conn) {
+	fmt.Println("New client connection established.")
+	for {
+		netData, err := bufio.NewReader(c).ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		temp := strings.TrimSpace(string(netData))
+		if temp == "STOP" {
+			break
+		}
+		fmt.Println(temp)
+		counter := strconv.Itoa(concurrentClientsCounter) + "\n"
+		c.Write([]byte(string(counter)))
+	}
+	concurrentClientsCounter--
+	fmt.Println("A client disconnected.")
+	c.Close()
+}
 
 func main() {
 	arguments := os.Args
@@ -17,34 +41,20 @@ func main() {
 	}
 
 	PORT := ":" + arguments[1]
-	l, err := net.Listen("tcp", PORT)
+	l, err := net.Listen("tcp4", PORT)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer l.Close()
 
-	c, err := l.Accept()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	for {
-		netData, err := bufio.NewReader(c).ReadString('\n')
+		c, err := l.Accept()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-
-		if strings.TrimSpace(string(netData)) == "STOP" {
-			fmt.Println("Exiting TCP server!")
-			return
-		}
-
-		fmt.Print("-> ", string(netData))
-		t := time.Now()
-		myTime := t.Format(time.RFC3339) + "\n"
-		c.Write([]byte(myTime))
+		go handleConnection(c)
+		concurrentClientsCounter++
 	}
 }
