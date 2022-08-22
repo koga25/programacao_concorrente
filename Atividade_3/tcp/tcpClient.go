@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -25,8 +27,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	var rttTotal = 0
-	var tries = 10000
+	test_flag := arguments[2]
+
+	tries := 10000
+	var rtts = make([]int, tries)
 	for i := 0; i < tries; i++ {
 		var initialTime = time.Now()
 		fmt.Fprintf(c, "sendTimeBetween\n")
@@ -34,8 +38,8 @@ func main() {
 		message, _ := bufio.NewReader(c).ReadString('\n')
 		var finalTime = time.Now()
 
-		var rtt = int(finalTime.Sub(initialTime).Milliseconds())
-		rttTotal = rttTotal + rtt
+		var rtt = int(finalTime.Sub(initialTime).Nanoseconds())
+		rtts[i] = rtt
 
 		if message == "END" {
 			fmt.Println("Server asked to disconnect. TCP client exiting...")
@@ -47,6 +51,8 @@ func main() {
 
 	c.Write([]byte("END"))
 
-	rttTotal = rttTotal / tries
-	os.Exit(rttTotal)
+	if test_flag == "true" {
+		file, _ := json.MarshalIndent(rtts, "", " ")
+		_ = ioutil.WriteFile("test.json", file, 0644)
+	}
 }
