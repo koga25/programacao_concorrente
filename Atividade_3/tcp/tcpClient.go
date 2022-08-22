@@ -52,7 +52,8 @@ func main() {
 	c.Write([]byte("END"))
 
 	if test_flag == "true" {
+		file_name := arguments[3]
 		file, _ := json.MarshalIndent(rtts, "", " ")
-		_ = ioutil.WriteFile("test.json", file, 0644)
+		_ = ioutil.WriteFile(file_name, file, 0644)
 	}
 }
