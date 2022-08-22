@@ -35,7 +35,10 @@ func producer(counter *Counter, c chan int) {
 		fmt.Printf("printing %d, %d times\n", message, numberOfMessages)
 		for ; numberOfMessages > 0; numberOfMessages-- {
 			c <- message
+			counter.mutex.Lock()
 			counter.counter--
+			counter.mutex.Unlock()
+
 		}
 		time.Sleep(time.Duration(rand.Intn(1e3)) * time.Millisecond)
 	}
