@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -23,21 +24,20 @@ func main() {
 		return
 	}
 
-	var receivingExpression = ""
-
-	for {
-		fmt.Fprintf(c, "sendNextLetter\n")
+	var tries = 10000
+	for i := 0; i < tries; i++ {
+		fmt.Fprintf(c, "sendTimeBetween\n")
 
 		message, _ := bufio.NewReader(c).ReadString('\n')
 		
 		if message == "END" {
-			fmt.Println("Message received fully. TCP client exiting...")
+			fmt.Println("Server asked to disconnect. TCP client exiting...")
 			return
 		}
 
-		var nextLetter = string(message[0])
-
-		receivingExpression = receivingExpression + nextLetter
-		fmt.Println("->: " + receivingExpression)
+		fmt.Println(strconv.Itoa(i) + " ->: " + message)
 	}
+
+	c.Write([]byte("END"))
+
 }

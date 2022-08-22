@@ -7,19 +7,17 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"time"
 )
 
 var concurrentClientsCounter = 0
+var clientIdCounter = 0 
 
-var sendingExpression = "socorram me subi no onibus em marrocos"
-var sendingExpressionLength = len(sendingExpression)
-var progressTracker map[int]int
-var clientIdCounter = 0
+var eventTime = time.Date(2025, 07, 29, 14, 30, 45, 100, time.Local)
 
 func handleConnection(c net.Conn) {
 	clientIdCounter++
 	var id = clientIdCounter
-	progressTracker[id] = 0
 	fmt.Println("New client connection established. id: " + strconv.Itoa(id))
 
 	for {
@@ -29,22 +27,20 @@ func handleConnection(c net.Conn) {
 			return
 		}
 		// Holds the message received from client, but its not really useful.
-		temp := strings.TrimSpace(string(netData))
-		fmt.Println(temp + " from id: " + strconv.Itoa(id))
+		message := strings.TrimSpace(string(netData))
 
-		var currentIndex = progressTracker[id]
-
-		if currentIndex == sendingExpressionLength {
+		if message == "END" {
 			c.Write([]byte("END"))
-			fmt.Println("Finished sending expression to id: " + strconv.Itoa(id))
+			fmt.Println("Client id: " + strconv.Itoa(id) + " asked to disconnect.")
 			break
 		}
 
-		var nextLetter = string(sendingExpression[currentIndex]) + "\n"
-		c.Write([]byte(nextLetter))
-
-		progressTracker[id] = currentIndex + 1
+		var today = time.Now()
+		var timeBetween = int(eventTime.Sub(today).Seconds())
+		
+		c.Write([]byte(strconv.Itoa(timeBetween) + "\n"))
 	}
+
 	concurrentClientsCounter--
 	fmt.Println("A client disconnected. id: " + strconv.Itoa(id))
 	c.Close()
@@ -65,7 +61,7 @@ func main() {
 	}
 	defer l.Close()
 
-	progressTracker = make(map[int]int)
+
 
 	for {
 		c, err := l.Accept()
