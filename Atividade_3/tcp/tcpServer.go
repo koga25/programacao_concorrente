@@ -61,8 +61,6 @@ func main() {
 	}
 	defer l.Close()
 
-
-
 	for {
 		c, err := l.Accept()
 		if err != nil {
