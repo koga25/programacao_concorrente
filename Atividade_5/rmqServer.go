@@ -1,12 +1,11 @@
 package main
 
 import (
+	amqp "github.com/rabbitmq/amqp091-go"
 	"context"
+	"time"
 	"fmt"
 	"os"
-	"time"
-
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 var concurrentClientsCounter = 0
@@ -37,9 +36,9 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declarando uma fila
-	queue, err := ch.QueueDeclare(
-		"timeBetween", // name
+	// Declarando uma fila de envio de respostas
+	responseQueue, err := ch.QueueDeclare(
+		"responseTimeBetween", // name
 		false,         // durable
 		false,         // delete when unused
 		false,         // exclusive
@@ -51,24 +50,63 @@ func main() {
 		return
 	}
 
-	// Create some logic here to only post content when someone asks
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	body := "Hello World!"
-	err = ch.PublishWithContext(
-		ctx,        // context
-		"",         // exchange
-		queue.Name, // routing key
-		false,      // mandatory
-		false,      // immediate
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body),
-		},
+	// Declarando uma fila de requisiçoes de evento
+	requestQueue, err := ch.QueueDeclare(
+		"requestTimeBetween", // name
+		false,         // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
+		nil,           // arguments
 	)
 	if err != nil {
 		fmt.Println(err)
 		return
+	}
+
+	requests, err := ch.Consume(
+		requestQueue.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Entering main loop")
+		
+	for r := range requests {
+		var request = string(r.Body)
+		fmt.Println(request)
+		if request == "sendTimeBetween" {
+			fmt.Println("entrei no if")
+
+			var today = time.Now()
+			var timeBetween = int(eventTime.Sub(today).Seconds())
+
+			err = ch.PublishWithContext(
+				ctx,        // context
+				"",         // exchange
+				responseQueue.Name, // routing key
+				false,      // mandatory
+				false,      // immediate
+				amqp.Publishing{
+					ContentType: "text/plain",
+					Body:        []byte(string(timeBetween)),
+				},
+			)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
 	}
 }

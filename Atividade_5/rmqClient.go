@@ -1,15 +1,14 @@
 package main
 
 import (
-	// "bufio"
-	// "encoding/json"
-	"fmt"
-	// "io/ioutil"
-	// "net"
-	"os"
-	// "strconv"
-	// "time"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"encoding/json"
+	"io/ioutil"
+	"context"
+	"strconv"
+	"time"
+	"fmt"
+	"os"
 )
 
 func main() {
@@ -37,8 +36,8 @@ func main() {
 	}
 	defer ch.Close()
 
-	queue, err := ch.QueueDeclare(
-		"timeBetween", // name
+	responseQueue, err := ch.QueueDeclare(
+		"responseTimeBetween", // name
 		false,   // durable
 		false,   // delete when unused
 		false,   // exclusive
@@ -50,8 +49,8 @@ func main() {
 		return
 	}
 
-	msgs, err := ch.Consume(
-		queue.Name, // queue
+	messages, err := ch.Consume(
+		responseQueue.Name, // queue
 		"",     // consumer
 		true,   // auto-ack
 		false,  // exclusive
@@ -63,45 +62,71 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	
-	var forever chan struct{}
-	
-	go func() {
-	for d := range msgs {
-		fmt.Println("Received a message: %s", string(d.Body))
+
+	// Declarando uma fila de requisiçoes de evento
+	requestQueue, err := ch.QueueDeclare(
+		"requestTimeBetween", // name
+		false,         // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
+		nil,           // arguments
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	}()
-	
-	fmt.Println(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
 
-	// test_flag := arguments[2]
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	// tries := 10000
-	// var rtts = make([]int, tries)
-	// for i := 0; i < tries; i++ {
-	// 	var initialTime = time.Now()
-	// 	fmt.Fprintf(c, "sendTimeBetween\n")
+	test_flag := arguments[2]
 
-	// 	message, _ := bufio.NewReader(c).ReadString('\n')
-	// 	var finalTime = time.Now()
+	tries := 10000
+	var rtts = make([]int, tries)
+	for i := 0; i < tries; i++ {
+		var initialTime = time.Now()
 
-	// 	var rtt = int(finalTime.Sub(initialTime).Nanoseconds())
-	// 	rtts[i] = rtt
+		fmt.Println("Sending new request")
 
-	// 	if message == "END" {
-	// 		fmt.Println("Server asked to disconnect. TCP client exiting...")
-	// 		os.Exit(0)
-	// 	}
+		body := "sendTimeBetween"
+		err = ch.PublishWithContext(
+			ctx,        // context
+			"",         // exchange
+			requestQueue.Name, // routing key
+			false,      // mandatory
+			false,      // immediate
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        []byte(body),
+			},
+		)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	// 	fmt.Println(strconv.Itoa(i) + " ->: " + message)
-	// }
+		fmt.Println("Entrando no loop de response")
+		
+		var response = ""
+		for d := range messages {
+			response  = string(d.Body)
+			fmt.Println("Received a message: %s", string(d.Body))
+		}
 
-	// c.Write([]byte("END"))
+		fmt.Println("received new response")
 
-	// if test_flag == "true" {
-	// 	file_name := arguments[3]
-	// 	file, _ := json.MarshalIndent(rtts, "", " ")
-	// 	_ = ioutil.WriteFile(file_name, file, 0644)
-	// }
+		var finalTime = time.Now()
+
+		var rtt = int(finalTime.Sub(initialTime).Nanoseconds())
+		rtts[i] = rtt
+
+		fmt.Println(strconv.Itoa(i) + " ->: " + response)
+	}
+
+	if test_flag == "true" {
+		file_name := arguments[3]
+		file, _ := json.MarshalIndent(rtts, "", " ")
+		_ = ioutil.WriteFile(file_name, file, 0644)
+	}
 }
