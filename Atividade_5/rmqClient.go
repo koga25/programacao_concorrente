@@ -1,14 +1,15 @@
 package main
 
 import (
-	amqp "github.com/rabbitmq/amqp091-go"
-	"encoding/json"
-	"io/ioutil"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"time"
-	"fmt"
-	"os"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 
 	CONNECT := arguments[1]
 
-	conn, err := amqp.Dial("amqp://guest:guest@" + CONNECT + "/")
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:" + CONNECT + "/")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -38,11 +39,11 @@ func main() {
 
 	responseQueue, err := ch.QueueDeclare(
 		"responseTimeBetween", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		false,                 // durable
+		false,                 // delete when unused
+		false,                 // exclusive
+		false,                 // no-wait
+		nil,                   // arguments
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -51,12 +52,12 @@ func main() {
 
 	messages, err := ch.Consume(
 		responseQueue.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+		"",                 // consumer
+		true,               // auto-ack
+		false,              // exclusive
+		false,              // no-local
+		false,              // no-wait
+		nil,                // args
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -66,11 +67,11 @@ func main() {
 	// Declarando uma fila de requisiçoes de evento
 	requestQueue, err := ch.QueueDeclare(
 		"requestTimeBetween", // name
-		false,         // durable
-		false,         // delete when unused
-		false,         // exclusive
-		false,         // no-wait
-		nil,           // arguments
+		false,                // durable
+		false,                // delete when unused
+		false,                // exclusive
+		false,                // no-wait
+		nil,                  // arguments
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -91,11 +92,11 @@ func main() {
 
 		body := "sendTimeBetween"
 		err = ch.PublishWithContext(
-			ctx,        // context
-			"",         // exchange
+			ctx,               // context
+			"",                // exchange
 			requestQueue.Name, // routing key
-			false,      // mandatory
-			false,      // immediate
+			false,             // mandatory
+			false,             // immediate
 			amqp.Publishing{
 				ContentType: "text/plain",
 				Body:        []byte(body),
@@ -107,10 +108,10 @@ func main() {
 		}
 
 		fmt.Println("Entrando no loop de response")
-		
+
 		var response = ""
 		for d := range messages {
-			response  = string(d.Body)
+			response = string(d.Body)
 			fmt.Println("Received a message: %s", string(d.Body))
 		}
 
