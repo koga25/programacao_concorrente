@@ -1,11 +1,13 @@
 package main
 
 import (
-	amqp "github.com/rabbitmq/amqp091-go"
 	"context"
-	"time"
 	"fmt"
 	"os"
+	"strconv"
+	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 var concurrentClientsCounter = 0
@@ -39,11 +41,11 @@ func main() {
 	// Declarando uma fila de envio de respostas
 	responseQueue, err := ch.QueueDeclare(
 		"responseTimeBetween", // name
-		false,         // durable
-		false,         // delete when unused
-		false,         // exclusive
-		false,         // no-wait
-		nil,           // arguments
+		false,                 // durable
+		false,                 // delete when unused
+		false,                 // exclusive
+		false,                 // no-wait
+		nil,                   // arguments
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -56,11 +58,11 @@ func main() {
 	// Declarando uma fila de requisiçoes de evento
 	requestQueue, err := ch.QueueDeclare(
 		"requestTimeBetween", // name
-		false,         // durable
-		false,         // delete when unused
-		false,         // exclusive
-		false,         // no-wait
-		nil,           // arguments
+		false,                // durable
+		false,                // delete when unused
+		false,                // exclusive
+		false,                // no-wait
+		nil,                  // arguments
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -69,12 +71,12 @@ func main() {
 
 	requests, err := ch.Consume(
 		requestQueue.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+		"",                // consumer
+		true,              // auto-ack
+		false,             // exclusive
+		false,             // no-local
+		false,             // no-wait
+		nil,               // args
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -82,7 +84,7 @@ func main() {
 	}
 
 	fmt.Println("Entering main loop")
-		
+
 	for r := range requests {
 		var request = string(r.Body)
 		fmt.Println(request)
@@ -91,16 +93,16 @@ func main() {
 
 			var today = time.Now()
 			var timeBetween = int(eventTime.Sub(today).Seconds())
-
+			fmt.Printf("%i\n", timeBetween)
 			err = ch.PublishWithContext(
-				ctx,        // context
-				"",         // exchange
+				ctx,                // context
+				"",                 // exchange
 				responseQueue.Name, // routing key
-				false,      // mandatory
-				false,      // immediate
+				false,              // mandatory
+				false,              // immediate
 				amqp.Publishing{
 					ContentType: "text/plain",
-					Body:        []byte(string(timeBetween)),
+					Body:        []byte(strconv.Itoa(timeBetween)),
 				},
 			)
 			if err != nil {

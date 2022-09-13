@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -84,45 +85,48 @@ func main() {
 	test_flag := arguments[2]
 
 	tries := 10000
-	var rtts = make([]int, tries)
+	var rtts = make([]int, tries+1)
+	var wg sync.WaitGroup
 	for i := 0; i < tries; i++ {
-		var initialTime = time.Now()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Printf("%i\n", i)
+			var initialTime = time.Now()
 
-		fmt.Println("Sending new request")
+			fmt.Println("Sending new request")
 
-		body := "sendTimeBetween"
-		err = ch.PublishWithContext(
-			ctx,               // context
-			"",                // exchange
-			requestQueue.Name, // routing key
-			false,             // mandatory
-			false,             // immediate
-			amqp.Publishing{
-				ContentType: "text/plain",
-				Body:        []byte(body),
-			},
-		)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+			body := "sendTimeBetween"
+			var err = ch.PublishWithContext(
+				ctx,               // context
+				"",                // exchange
+				requestQueue.Name, // routing key
+				false,             // mandatory
+				false,             // immediate
+				amqp.Publishing{
+					ContentType: "text/plain",
+					Body:        []byte(body),
+				},
+			)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
-		fmt.Println("Entrando no loop de response")
+			fmt.Println("Entrando no loop de response")
 
-		var response = ""
-		for d := range messages {
-			response = string(d.Body)
-			fmt.Println("Received a message: %s", string(d.Body))
-		}
+			mes := <-messages
+			response, _ := strconv.Atoi(string(mes.Body))
+			fmt.Printf("Received a message: %d\n", response)
 
-		fmt.Println("received new response")
+			fmt.Println("received new response")
 
-		var finalTime = time.Now()
+			var finalTime = time.Now()
 
-		var rtt = int(finalTime.Sub(initialTime).Nanoseconds())
-		rtts[i] = rtt
+			var rtt = int(finalTime.Sub(initialTime).Nanoseconds())
+			rtts[i] = rtt
 
-		fmt.Println(strconv.Itoa(i) + " ->: " + response)
+		}()
 	}
 
 	if test_flag == "true" {
@@ -130,4 +134,6 @@ func main() {
 		file, _ := json.MarshalIndent(rtts, "", " ")
 		_ = ioutil.WriteFile(file_name, file, 0644)
 	}
+
+	wg.Wait()
 }
