@@ -91,10 +91,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fmt.Printf("%i\n", i)
 			var initialTime = time.Now()
-
-			fmt.Println("Sending new request")
 
 			body := "sendTimeBetween"
 			var err = ch.PublishWithContext(
@@ -113,13 +110,9 @@ func main() {
 				return
 			}
 
-			fmt.Println("Entrando no loop de response")
-
 			mes := <-messages
 			response, _ := strconv.Atoi(string(mes.Body))
-			fmt.Printf("Received a message: %d\n", response)
-
-			fmt.Println("received new response")
+			fmt.Println(strconv.Itoa(i) + " ->: " + response)
 
 			var finalTime = time.Now()
 

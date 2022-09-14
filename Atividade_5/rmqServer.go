@@ -83,17 +83,12 @@ func main() {
 		return
 	}
 
-	fmt.Println("Entering main loop")
-
 	for r := range requests {
 		var request = string(r.Body)
 		fmt.Println(request)
 		if request == "sendTimeBetween" {
-			fmt.Println("entrei no if")
-
 			var today = time.Now()
 			var timeBetween = int(eventTime.Sub(today).Seconds())
-			fmt.Printf("%i\n", timeBetween)
 			err = ch.PublishWithContext(
 				ctx,                // context
 				"",                 // exchange
