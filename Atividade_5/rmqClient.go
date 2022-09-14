@@ -24,7 +24,7 @@ func main() {
 
 	CONNECT := arguments[1]
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:" + CONNECT + "/")
+	conn, err := amqp.Dial("amqp://guest:guest@" + CONNECT + "/")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -111,7 +111,7 @@ func main() {
 			}
 
 			mes := <-messages
-			response, _ := strconv.Atoi(string(mes.Body))
+			response := string(mes.Body)
 			fmt.Println(strconv.Itoa(i) + " ->: " + response)
 
 			var finalTime = time.Now()
