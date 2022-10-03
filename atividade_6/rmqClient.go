@@ -82,19 +82,7 @@ func main() {
 					return
 				}
 			}
-
-			//log.Printf(" [x] Sent %s", body)
-
 		}(i)
 	}
 	wg.Wait()
-	/*
-		test_flag := arguments[2]
-			if test_flag == "true" {
-				file_name := arguments[3]
-				file, _ := json.MarshalIndent(rtts, "", " ")
-				_ = ioutil.WriteFile(file_name, file, 0644)
-			}
-
-	*/
 }

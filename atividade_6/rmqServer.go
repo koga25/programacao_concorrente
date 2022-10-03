@@ -102,7 +102,6 @@ func main() {
 			if i == 9999 {
 				var x = int64(0)
 				for z := 0; z < 10000; z++ {
-					//println(int64(buf[z]))
 					x += int64(buf[z])
 				}
 
@@ -119,8 +118,6 @@ func main() {
 				f.WriteString("\n")
 			}
 		}
-		//i++
-		//fmt.Printf("received %s.       %dnth message.\n", d.Body, i)
 	}
 
 	<-forever
