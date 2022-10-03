@@ -95,7 +95,7 @@ func main() {
 	for d := range msgs {
 		unixTimestamp := int64(binary.LittleEndian.Uint64(d.Body[0:]))
 		publisherNumber := binary.LittleEndian.Uint16(d.Body[8:])
-		if publisherNumber == 20 {
+		if publisherNumber == 0 {
 			timeElapsed := time.Now().UTC().UnixMilli() - unixTimestamp
 			buf[i] = int64(timeElapsed)
 			i++
@@ -111,7 +111,7 @@ func main() {
 				i = 0
 
 				file, _ := json.MarshalIndent(x, "", " ")
-				f, err := os.OpenFile("test_json_4096.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				f, err := os.OpenFile("test_json_4096_1_publisher.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println(err)
 				}
