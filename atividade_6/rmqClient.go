@@ -61,12 +61,12 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			buf := [1024]byte{}
+			buf := [4096]byte{}
 			t := reflect.TypeOf(buf)
 			fmt.Println(t.Size())
 			for b := 0; b < 10000; b++ {
 				//encoded = binary.Write()
-				binary.LittleEndian.PutUint64(buf[0:], uint64(time.Now().UTC().UnixMicro()))
+				binary.LittleEndian.PutUint64(buf[0:], uint64(time.Now().UTC().UnixMilli()))
 				binary.LittleEndian.PutUint16(buf[8:], i)
 				err = ch.PublishWithContext(ctx,
 					"pubsub", // exchange

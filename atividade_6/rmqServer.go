@@ -96,20 +96,22 @@ func main() {
 		unixTimestamp := int64(binary.LittleEndian.Uint64(d.Body[0:]))
 		publisherNumber := binary.LittleEndian.Uint16(d.Body[8:])
 		if publisherNumber == 20 {
-			timeElapsed := time.Now().UTC().UnixMicro() - unixTimestamp
+			timeElapsed := time.Now().UTC().UnixMilli() - unixTimestamp
 			buf[i] = int64(timeElapsed)
 			i++
 			if i == 9999 {
 				var x = int64(0)
 				for z := 0; z < 10000; z++ {
+					//println(int64(buf[z]))
 					x += int64(buf[z])
 				}
+
 				x = int64(x / 10000)
 				fmt.Println(x)
 				i = 0
 
 				file, _ := json.MarshalIndent(x, "", " ")
-				f, err := os.OpenFile("test_json_1024.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				f, err := os.OpenFile("test_json_4096.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println(err)
 				}
