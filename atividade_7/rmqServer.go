@@ -10,11 +10,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var concurrentClientsCounter = 0
-var clientIdCounter = 0
-
-var eventTime = time.Date(2025, 07, 29, 14, 30, 45, 100, time.Local)
-
 func main() {
 	arguments := os.Args
 	if len(arguments) == 1 {
@@ -36,6 +31,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	//prefetch settings is done here
+	ch.Qos(10000, 0, false)
 
 	defer ch.Close()
 
@@ -79,7 +76,7 @@ func main() {
 	msgs, err := ch.Consume(
 		q.Name, // queue
 		"",     // consumer
-		true,   // auto-ack
+		false,  // auto-ack
 		false,  // exclusive
 		false,  // no-local
 		false,  // no-wait
@@ -97,29 +94,27 @@ func main() {
 
 	for d := range msgs {
 		unixTimestamp := int64(binary.LittleEndian.Uint64(d.Body[0:]))
-		publisherNumber := binary.LittleEndian.Uint16(d.Body[8:])
-		if publisherNumber == 20 {
-			timeElapsed := time.Now().UTC().UnixMilli() - unixTimestamp
-			buf[i] = int64(timeElapsed)
-			i++
-			if i == 9999 {
-				var x = int64(0)
-				for z := 0; z < 10000; z++ {
-					x += int64(buf[z])
-				}
-
-				x = int64(x / 10000)
-				fmt.Println(x)
-				i = 0
-
-				file, _ := json.MarshalIndent(x, "", " ")
-				f, err := os.OpenFile("test_json_4096_1_publisher.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-				if err != nil {
-					fmt.Println(err)
-				}
-				f.Write(file)
-				f.WriteString("\n")
+		d.Ack(false)
+		timeElapsed := time.Now().UTC().UnixMilli() - unixTimestamp
+		buf[i] = int64(timeElapsed)
+		i++
+		if i == 9999 {
+			var x = int64(0)
+			for z := 0; z < 10000; z++ {
+				x += int64(buf[z])
 			}
+
+			x = int64(x / 10000)
+			fmt.Println(x)
+			i = 0
+
+			file, _ := json.MarshalIndent(x, "", " ")
+			f, err := os.OpenFile("test_json_10000_PC.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				fmt.Println(err)
+			}
+			f.Write(file)
+			f.WriteString("\n")
 		}
 	}
 

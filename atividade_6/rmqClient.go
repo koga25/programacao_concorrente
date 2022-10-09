@@ -32,7 +32,7 @@ func main() {
 	defer conn.Close()
 	var wg sync.WaitGroup
 
-	for i := uint16(0); i < 1; i++ {
+	for i := uint16(0); i < 40; i++ {
 		wg.Add(1)
 		go func(i uint16) {
 
